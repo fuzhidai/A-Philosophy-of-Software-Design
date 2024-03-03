@@ -1,4 +1,4 @@
-![logo](assets/images/a_philosophy_of_software_designs.png ':size=20%')
+![logo](assets/images/a_philosophy_of_software_design.cover.png ':size=20%')
 
 
 # A Philosophy of Software Design <small>中文版</small>
