@@ -10,7 +10,7 @@
     <!-- Theme: Simple (light + dark) -->
     <link rel="stylesheet" media="(prefers-color-scheme: light)" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
     <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover">
 
     <!-- gitalk   -->
     <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk/dist/gitalk.css">
@@ -56,7 +56,7 @@
                             'https://github.com/fuzhidai/A-Philosophy-of-Software-Design/blob/main/' +
                             vm.route.file;
                     }
-                    var editHtml = '[:memo: Edit Document](' + url + ')\n';
+                    var editHtml = '[:memo: 编辑文档](' + url + ')\n';
                     return (
                         editHtml +
                         html
@@ -86,29 +86,21 @@
         ],
     }
 </script>
-<!-- Docsify v4 -->
-<script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-<script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+    
+<!-- Required -->
+<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
+
+<!-- Recommended -->
+<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/zoom-image.min.js"></script>
 
 <!-- Pagination -->
 <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
 
 <!-- gitalk -->
 <script src="//cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js"></script>
-
-<!-- Medium's 风格的图片缩放插件 -->
-<script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
-
 <script src="//cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.js"></script>
-
-<!-- docsify -->
-<script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
-
-<!-- docsify-themeable -->
-<script src="//cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script>
-
-<!-- Recommended -->
-<script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
 
 <script>
 
