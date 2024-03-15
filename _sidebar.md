@@ -4,3 +4,5 @@
 - [第十四章 选择名称](zh-cn/Chapter-14_Choosing_Names/Chapter-14_Choosing_Names.md)
 - [第十五章 首先编写注释](zh-cn/Chapter-15_Write_The_Comments_First/Chapter-15_Write_The_Comments_First.md)
 - [第十六章 修改已有代码](zh-cn/Chapter-16_Modifying_Existing_Code/Chapter-16_Modifying_Existing_Code.md)
+- [第十七章 一致性](zh-cn/Chapter-17_Consistency/Chapter-17_Consistency.md)
+- [第十八章 代码应清晰](zh-cn/Chapter-18_Code_Should_be_Obvious/Chapter-18_Code_Should_be_Obvious.md)
