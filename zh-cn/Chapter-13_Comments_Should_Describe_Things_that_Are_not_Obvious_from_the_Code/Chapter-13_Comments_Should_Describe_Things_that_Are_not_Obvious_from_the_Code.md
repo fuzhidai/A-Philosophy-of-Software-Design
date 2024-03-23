@@ -24,4 +24,80 @@
 
 前面两个类型的注释最为重要。所有类和方法都应具有接口注释，每个类变量也应具有注释。有时变量或方法的声明非常清晰，以至于无需增加注释，getter 和 setter 方法有时就是这类情况，但这种情况很少见，相比于花精力担心是否需要注释，注释所有内容则容易得多。实现（Implementation）注释通常是多余的（见下面的 13.6 节）。跨组件注释最为最少见，并且最难编写，但当需要它们时，它们往往又是比较重要的，13.7 节将详细探讨它们。
 
-### 
+### 13.2 不要复述代码
+
+不幸的是，许多注释并不是特别有用。最常见的原因是注释复述了代码，注释中的所有信息，都能够轻易的从注释紧邻的代码中推断出来。下面是近期某篇研究论文中出现的代码示例：
+
+```auto
+ptr_copy = get_copy(obj)             # 获取指针拷贝
+if is_unlocked(ptr_copy):            # obj 是否没有锁？
+  return obj                         # 返回当前 obj
+if is_copy(ptr_copy):                # 是否为拷贝?
+  return obj                         # 返回 obj
+thread_id = get_thread_id(ptr_copy)
+if thread_id == ctx.thread_id:       # 被当前 ctx 锁定
+  return ptr_copy                    # 返回拷贝
+```
+
+除了 “被锁定” 注释以外，这些注释中没有任何有效信息，来提供某些关于线程的信息，无法从代码直接获得。可以发现，这些注释与代码的详细程度大致相同，每行代码都有一个注释，用以描述这行代码。类似这样的注释毫无用处。
+
+这里是更多重复代码的注释样例：
+
+```auto
+// 增加一个水平滚动条
+hScrollBar = new JScrollBar(JScrollBar.HORIZONTAL);
+add(hScrollBar, BorderLayout.SOUTH);
+
+// 增加一个竖直滚动条
+vScrollBar = new JScrollBar(JScrollBar.VERTICAL);
+add(vScrollBar, BorderLayout.EAST);
+
+// 初始化插入符号位置的相关值
+caretX = 0;
+caretY = 0;
+caretMemX = null;
+```
+
+这些注释没有提供任何价值。对于起始的两行注释，代码已经足够清晰，不再需要注释。在第三个情况下，注释可能有用，但当前注释没有提供足够有帮助的细节。
+
+编写完注释后，询问自己下面这个问题：如果某人从未看过这些代码，他是否仅通过查看与注释相邻的代码，就可以编写出这些注释？如果答案是可以，那就像上面的示例一样，这些注释并没有让代码更易理解。像这样的注释，正是有些人认为注释毫无价值的原因。
+
+另一个常见错误，是在注释中使用某些词语，而这些词语已在被注释实体名称中使用。
+
+```auto
+/*
+* Obtain a normalized resource name from REQ.
+*/
+private static String[] getNormalizedResourceNames(HTTPRequest req) ...
+
+/*
+* Downcast PARAMETER to TYPE.
+*/
+private static Object downCastParameter(String parameter, String type)
+...
+
+/*
+* The horizontal padding of each line in the text.
+*/
+private static final int textHorizontalPadding = 4;
+```
+
+这些注释只是将方法名或变量名中的单词提取出来，可能再增加一些参数名称和参数类型，并最终将它们拼成一个句子。例如，在第二个注释里，唯一未在代码中出现的词是 “to”。同样，只需查看声明，就可以完成这些注释的编写，而无需理解变量的含义，因此它们毫无价值。
+
+**危险信号：注释复述代码**
+
+如果注释中的信息，已经可以从相邻代码中明确获得，那这些注释就是无效的。如果注释使用了组成被描述事物名称的单词，那就是这种情况的一个例子。
+
+同时，这些注释也遗漏了一些重要的信息，例如，什么是 “标准化的资源名称”，getNormalizedResourceNames 方法返回数组中的元素是什么？内边距的单位是什么？内边距是在每行的一侧还是两侧？在注释中记录这些信息，将会更有帮助。
+
+编写良好注释的第一步，就是使用那些未在被描述实体名称中出现的词语。为注释选择能够提供有关实体含义额外信息的词语，而非仅仅重复其名称。例如，这是 textHorizontalPadding 方法优化后的注释：
+
+```auto
+/*
+* The amount of blank space to leave on the left and
+* right sides of each line of text, in pixels.
+*/
+private static final int textHorizontalPadding = 4;
+```
+
+这个注释提供了无法从声明本身直接获取的额外信息，例如单位（像素），以及内边距实际是对每行的两侧都生效。相比于直接使用术语 “内边距”，该注释解释了内边距是什么，以防读者不了解该术语。
