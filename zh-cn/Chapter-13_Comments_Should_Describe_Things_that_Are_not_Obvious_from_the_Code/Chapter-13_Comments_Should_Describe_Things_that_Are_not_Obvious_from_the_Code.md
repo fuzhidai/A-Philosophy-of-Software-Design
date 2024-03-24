@@ -144,7 +144,7 @@ private TreeMap<Integer, Integer> numLinesWithLength;
 在注释变量时，考虑使用名词，而非动词。换句话说，关注变量代表什么，而非如何操作。考虑下面这个注释：
 
 ```auto
-/* 跟随者变量: 指示器变量，让接收器和周期任务线程能够通讯，
+/* 跟随者变量: 指示器变量，让接收器和周期任务线程能够通信，
  * 以确认心跳是否在跟随者的选举超时时间窗口内被接收到。
  * 接收到有效心跳时，切换到 TRUE
  * 选举超时时间窗重置时，切换到 FALSE
@@ -156,7 +156,7 @@ private boolean receivedValidHeartbeat
 
 ```auto
 /* True 意味着在上次选举计时器重置后，已经接收到心跳。
- * 用于在接收器和周期任务间通讯。
+ * 用于在接收器和周期任务间通信。
  */
 private boolean receivedValidHeartbeat;
 ```
@@ -196,7 +196,7 @@ int readActiveRpcId = RPC_ID_NOT_ASSIGNED;
 
 高层注释比低层注释更难编写，因为你必须以不同的方式来思考代码。问问自己：这段代码想要做什么？表述代码所有信息的最简方式是什么？这段代码最重要的是什么？
 
-工程师往往非常注重细节，我们热爱细节，并善于管理大量细节，这也是成为一名优秀工程师的必要条件。但优秀的软件设计师也应能跳出细节，从更高的层次思考系统。这意味着需要确定系统最重要的方面，忽略底层细节，只考虑系统最基本的特征，这是抽象的本质（找到简单的方式来考虑复杂的实体），也是编写高层次注释的必要行为。良好的高层次注释，表述一个或几个提供概念框架的简单想法，例如 “附加到现有 RPC 中”。有了框架，就很容看出特定的代码语句，如何与整体的目标相关联。
+工程师往往非常注重细节，热爱细节，并善于管理大量细节，这也是成为一名优秀工程师的必要条件。但优秀的软件设计师也应能跳出细节，从更高的层次思考系统。这意味着需要确定系统最重要的方面，忽略底层细节，只考虑系统最基本的特征，这是抽象的本质（找到简单的方式来考虑复杂的实体），也是编写高层次注释的必要行为。良好的高层次注释，表述一个或几个提供概念框架的简单想法，例如 “附加到现有 RPC 中”。有了框架，就很容看出特定的代码语句，如何与整体的目标相关联。
 
 这是另一个代码样例，具有良好的高层次注释：
 
@@ -221,3 +221,187 @@ if (numProcessedPKHashes < readRpc[i].numHashes) {
 ```
 
 这段注释做了两件事，第二句提供了代码功能的抽象描述，第一句则有些不同：它解释（从高层）了为什么代码会被执行。“我们是如何走到这一步的” 形式的注释，对于帮助读者理解代码非常有效。例如，注释方法时，描述最有可能调用该方法的条件，将会非常有用（尤其如果代码只在特殊的场景下被调用）。
+
+### 13.5 接口文档
+
+注释的重要作用之一是定义抽象（abstractions）。正如第 4 章所述，抽象是实体的简化视图，在保留重要信息的基础上，省略非必要的细节。代码不适合描述抽象，它太过于底层，并包含了在抽象中需要忽略的实现细节。使用注释是描述抽象的唯一方法，因此如果想要代码表现出良好的抽象，则必须使用注释来记录这些抽象。
+
+描述抽象的第一步，就是区分接口注释（interface comments）和实现注释（implementation comments）。接口注释提供的信息，是某人想要使用类或方法时，需要知晓的信息，它定义了抽象。实现注释描述类或方法为了实现抽象，其内部的工作方式。区分两种注释非常重要，这样接口用户才不会暴露于实现的细节。此外，两种形式的注释最好不同。如果接口注释也必须描述实现，那类或方法就会变得浅薄。这意味编写注释的行为，会给高质量的设计提供材料，第 15 章将会继续讨论这个想法。
+
+类的接口注释提供了高层次的描述，用以记录类提供的抽象。示例如下：
+
+```auto
+/**
+* This class implements a simple server-side interface to the HTTP
+* protocol: by using this class, an application can receive HTTP
+* requests, process them, and return responses. Each instance of
+* this class corresponds to a particular socket used to receive
+* requests. The current implementation is single-threaded and
+* processes one request at a time.
+*/
+public class Http {...}
+```
+
+该注释描述了类的整体功能，不包含任何实现细节，甚至没有提到任何具体的方法。也记录了类实例的具体作用。最后，表述了类的限制（它不支持多线程并发访问），这对开发者衡量是否要使用它非常重要。
+
+方法的接口注释，既包含用于抽象化的高层次信息，也包含用于准确化的低层次细节：
+
+* 注释通常以一两句话开头，描述调用者所感知到的方法行为，这是高层次的抽象。
+* 注释必须描述所有的参数和返回值（如果有的话）。这些注释必须非常准确，且必须描述参数的限制，以及参数之间的依赖关系。
+* 如果方法存在任何副作用，必须在接口注释中记录。任何影响系统未来行为，但却并不属于最终结果的后果，都是副作用。例如，如果方法向内部数据结构添加了一个值，且该值会由后续方法调用获取，那这就是副作用，向文件系统写入内容，同样也是副作用。
+* 方法的接口注释，必须描述方法可能产生的所有异常。
+* 如果存在方法调用前需要满足的先决条件，那必须记录它们（可能其它的方法必须先被调用。对于二分检索法，待检索的列表必须已被存储）。最小化前置条件很棒，但所有剩下的前置条件也都必须记录。
+
+这里是一个方法的接口注释，描述了从缓冲区对象里拷贝数据：
+
+```auto
+/**
+* Copy a range of bytes from a buffer to an external location.
+*
+* \param offset
+* Index within the buffer of the first byte to copy.
+* \param length
+* Number of bytes to copy.
+* \param dest
+* Where to copy the bytes: must have room for at least
+* length bytes.
+*
+* \return
+* The return value is the actual number of bytes copied,
+* which may be less than length if the requested range of
+* bytes extends past the end of the buffer. 0 is returned
+* if there is no overlap between the requested range and
+* the actual buffer.
+*/
+uint32_t
+Buffer::copy(uint32_t offset, uint32_t length, void* dest)
+...
+```
+
+这段注释的语法（例如 \return）遵循了 Doxygen 的规范，Doxygen 是提取 C/C++ 代码，并将其编译为网页的程序。该注释提供了开发者调用该方法所需的所有信息，包括特殊情况的处理方式（记录了该方法如何遵循第十章的建议，不定义任何关于范围规则的错误）。开发者无需为了调用该方法而查阅其实现，同时，该接口注释未提供任何与实现相关的信息，例如它如何扫描内部结构，以获取其所需的数据。
+
+对于更广泛的例子，让我们考虑一个命名为 IndexLookup 的类，它是分布式存储系统的一部分。存储系统持有一个表集合，每个表都包含很多的对象。此外，每个表都可以具有一个或多个索引，每个索引根据对象的特定字段，提供对表中对象的高效访问。例如，某个索引可能用来基于对象的 name 字段进行检索，而另一个索引可能用来基于对象的 age 字段进行检索。使用这些索引，应用程序可以快速提取具有特定 name 的所有对象，或 age 在某个给定范围内的所有对象。
+
+IndexLookup 类提供了便捷的接口来执行索引检索。这里是一些它可能在应用中使用的例子：
+
+```auto
+query = new IndexLookup(table, index, key1, key2);
+while (true) {
+  object = query.getNext();
+  if (object == NULL) {
+    break;
+  }
+  ... process object ...
+}
+```
+
+应用程序首先通过提供查询表、索引以及索引范围参数（例如，如果索引是基于年龄字段，key1 和 key2 可能被指定为 21 和 65，以此检索所有年龄在该区间内的对象），构造 IndexLookup 的对象实例。然后应用程序多次调用 getNext 方法，每次调用将返回一个满足条件的对象，一旦所有匹配对象都已返回，getNext 将返回 NULL。由于存储系统是分布式的，所以该类的实现会有些复杂。表中的对象可能分布在多个服务器上，其索引也可能分布在一组不同的服务器上。因此，IndexLookup 类的代码必须先与所有相关索引服务器通信，收集满足范围的对象信息，然后必须与实际存储对象的服务器进行通信，获取对象值。
+
+现在让我们考虑下，哪些信息需要包含在该类的方法注释中。对于下面给出的每条信息，问问自己，开发人员是否需要知道这些信息，才能使用这个类（我的答案在本章的结尾处）：
+
+1. IndexLookup 类向持有索引和对象的服务器，所发送消息的格式。
+2. 用于确定特定对象是否满足期望范围的对比方法（对比方法是使用整型、浮点型、数字、还是字符串？）。
+3. 服务器存储索引的数据结构。
+4. IndexLookup 是否是通过并发的方式，向多个不同的服务器发起请求。
+5. 处理服务器崩溃的机制。
+
+这里是 IndexLookup 类接口注释的原始版本，该摘录还包含了类定义中的几行，并在注释中引用了这些定义：
+
+```auto
+/*
+* This class implements the client side framework for index range
+* lookups. It manages a single LookupIndexKeys RPC and multiple
+* IndexedRead RPCs. Client side just includes "IndexLookup.h" in
+* its header to use IndexLookup class. Several parameters can be set
+* in the config below:
+* - The number of concurrent indexedRead RPCs
+* - The max number of PKHashes a indexedRead RPC can hold at a time
+* - The size of the active PKHashes
+*
+* To use IndexLookup, the client creates an object of this class by
+* providing all necessary information. After construction of
+* IndexLookup, client can call getNext() function to move to next
+* available object. If getNext() returns NULL, it means we reached
+* the last object. Client can use getKey, getKeyLength, getValue,
+* and getValueLength to get object data of current object.
+*/
+class IndexLookup {
+  ...
+  private:
+  /// Max number of concurrent indexedRead RPCs
+  static const uint8_t NUM_READ_RPC = 10;
+  /// Max number of PKHashes that can be sent in one
+  /// indexedRead RPC
+  static const uint32_t MAX_PKHASHES_PERRPC = 256;
+  /// Max number of PKHashes that activeHashes can
+  /// hold at once.
+
+  static const size_t MAX_NUM_PK = (1 << LG_BUFFER_SIZE);
+}
+```
+
+在继续阅读之前，看看自己是否能发现这个注释中的问题。这里是我发现的问题：
+
+* 第一段的大部分关注实现，而非接口。例如，用户无需知道与服务器通信的特定远程调用名称。第一段后半部分提到的配置参数，都是私有变量，它们只与类的维护者相关，而与类的用户无关。注释中的这些实现信息都应该省略。
+* 注释还包含了一些显而易见的事。例如，无需告知用户引入 IndexLookup.h：任何编写 C++ 代码的人都能猜到这是必要的。此外，文本 “通过提供所有必要信息” 什么也没说，所以可以省略。
+
+对于这个类，一个简短的注释就够了（而且更可取）：
+
+```auto
+/*
+* This class is used by client applications to make range queries
+* using indexes. Each instance represents a single range query.
+*
+* To start a range query, a client creates an instance of this
+* class. The client can then call getNext() to retrieve the objects
+* in the desired range. For each object returned by getNext(), the
+* caller can invoke getKey(), getKeyLength(), getValue(), and
+* getValueLength() to get information about that object.
+*/
+```
+
+该注释的最后一段并非绝对必要，因为它与方法注释存在大量的重合信息。但在类注释文档中提供相关示例，介绍其方法的协作方式可能会很有帮助，特别是对于使用模式并不明显的深层类。需要注意，新注释并没有提到 getNext 方法返回  NULL 的情况。该注释并不打算记录每个方法的所有细节，它只提供高层次的信息，帮助读者理解方法互相协作的方式，以及每个方法可能被调用的时机。有关详细信息，读者可以参考各个方法的接口注释。该注释也没有提到服务器崩溃，因为服务器崩溃对该类的用户并不可见（系统会自动恢复）。
+
+**危险信号：实现文档污染接口**
+
+当接口文档（例如方法接口文档）描述非使用所需的实现细节时，就是一个危险的信号。
+
+现在考虑下面这段代码，展示了 IndexLookup 类中 isReady 方法的第一版文档注释：
+
+```auto
+/**
+* Check if the next object is RESULT_READY. This function is
+* implemented in a DCFT module, each execution of isReady() tries
+* to make small progress, and getNext() invokes isReady() in a
+* while loop, until isReady() returns true.
+*
+* isReady() is implemented in a rule-based approach. We check
+* different rules by following a particular order, and perform
+* certain actions if some rule is satisfied.
+*
+* \return
+* True means the next Object is available. Otherwise, return
+* false.
+*/
+bool IndexLookup::isReady() { ... }
+```
+
+再一次，该注释的大部分都不属于这里，例如对于 DCFT 的引用，以及关于实现的整个第二段，这是接口文档注释的常见错误。有些实现文档很有用，但它应位于方法内部，这样将能与接口文档更加清晰的区分开来。此外，文档的第一段比较模糊（RESULT_READY 是什么意思？），缺失了一些重要信息。最后，这里没有必要描述 getNext 方法的实现。下面是更好一些的版本：
+
+```auto
+/*
+* Indicates whether an indexed read has made enough progress for
+* getNext to return immediately without blocking. In addition, this
+* method does most of the real work for indexed reads, so it must
+* be invoked (either directly, or indirectly by calling getNext) in
+* order for the indexed read to make progress.
+*
+* \return
+* True means that the next invocation of getNext will not block
+* (at least one object is available to return, or the end of
+the
+* lookup has been reached); false means getNext may block.
+*/
+```
+
+这个版本的注释对 “就绪” 的含义，提供了更加准确的信息，并补充了一些重要的信息，即如果要继续基于索引进行检索，则必须调用该方法。
