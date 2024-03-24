@@ -428,3 +428,74 @@ the
 除了描述代码在做什么之外，实现注释对于解释原因也很有用。如果代码的某些方面比较棘手，无法仅通过阅读代码来理解，那应将其记录下来。例如，如果漏洞修复需要额外的代码，但其行为并不总是非常明确，可以添加注释来说明为什么需要这段代码。对于漏洞修复，有些写得很好的问题描述漏洞报告，注释可以引用这些漏洞追踪数据库中的报告，而非重复它们的细节（“修复 RAM-436，关于 Linux 2.4.x 设备驱动崩溃”）。开发人员可以通过查询漏洞数据库，获取更多的详细信息（这是防止注释重复的例子，将会在第十六章中讨论）。
 
 对于较长的方法，为一些重要的本地变量编写注释，可能非常有帮助。可是，如果大多数本地变量具有良好的命名，那它们就不再需要注释。如果变量的所有用法都在上下几行内可见，那通常无需注解，也能轻松理解变量的用途。在这个场景下，可以让读者阅读代码来理解变量的含义。可是，如果变量的用法跨越大段代码，那应考虑增加注释来描述该变量。当注释变量时，关注变量代表什么，而非它如何在代码中被使用。
+
+### 13.7 跨组件设计决策
+
+在一个完美的世界里，每个重要的设计决策都被封状态一个单独的类中。不幸的是，真实的系统不可避免地以影响多个类的设计决策而告终。例如，某个网络协议的设计会同时影响发送者和接受者，并且它们可能会实现在不同的地方。跨组件决策通常很复杂且隐晦，许多漏洞由它们引发，所以对于它们来说，好的文档至关重要。
+
+跨组件文档的最大挑战，就是寻找存放它的位置，这个位置应该能够很自然地被开发人员发现。有时存在一些明显的中心位置，可以用于存放这些文档。例如，RAMCloud 存储系统定义了一个 status 值，它由每个请求所返回，用来指请求成功或失败。为新的异常条件添加一个 status 需要修改多个不同的文件（一个文件映射 status 值到异常，另一个文件为每个 status 提供人类可读的信息，等等）。幸运的是，这里有一个明显位置，开发人员添加新状态时必须前往的位置，status 枚举声明处。我们利用这个有利条件，通过在该枚举中添加注释，来标识所有其它必须修改的位置：
+
+```auto
+typedef enum Status {
+  STATUS_OK = 0,
+  STATUS_UNKNOWN_TABLET = 1,
+  STATUS_WRONG_VERSION = 2,
+  ...
+  STATUS_INDEX_DOESNT_EXIST = 29,
+  STATUS_INVALID_PARAMETER = 30,
+  STATUS_MAX_VALUE = 30,
+  // Note: if you add a new status value you must make the following
+  // additional updates:
+  // (1) Modify STATUS_MAX_VALUE to have a value equal to the
+  // largest defined status value, and make sure its definition
+  // is the last one in the list. STATUS_MAX_VALUE is used
+  // primarily for testing.
+  // (2) Add new entries in the tables "messages" and "symbols" in
+  // Status.cc.
+  // (3) Add a new exception class to ClientException.h
+  // (4) Add a new "case" to ClientException::throwException to map
+  // from the status value to a status-specific ClientException
+  // subclass.
+  // (5) In the Java bindings, add a static class for the exception
+  // to ClientException.java
+  // (6) Add a case for the status of the exception to throw the
+  // exception in ClientException.java
+  // (7) Add the exception to the Status enum in Status.java, making
+  // sure the status is in the correct position corresponding to
+  // its status code.
+}
+```
+
+新的状态值会被添加到现存列表的末尾，所以注释也放置在结尾处，这样它们将更可能会被看到。
+
+不幸的是，在很多场景下，不存在明显的中心点来存放跨组件文档。RAMCloud 存储系统中有一个例子，即处理僵尸服务器（系统认为其已经崩溃，但实际其还在运行）的代码。处理僵尸服务器的代码，分布在多个不同的组件中，并且它们互相依赖。没有哪个代码片段处于明显的中心点，能够用来存放文档。一种可能的方案，是在依赖它的每个位置，都复制部分文档。可是这样太笨拙了，会使得保持文档随系统演进同步更新变得非常困难。作为替代方案，可以只将文档放置到需要它的某个地方，但在这种情况下，开发人员很可能不会再查看该文档，或者并不知道如何找到它。
+
+我最近试验了一个方法，即将跨组件问题记录在一个叫做 designNotes 的中心化文件中。该文件被切分为几个带标签的部分，每个部分都有一个主题。例如，这是该文件的一个摘录：
+
+```auto
+...
+Zombies
+-------
+A zombie is a server that is considered dead by the rest of the
+cluster; any data stored on the server has been recovered and will
+be managed by other servers. However, if a zombie is not actually
+dead (e.g., it was just disconnected from the other servers for a
+while) two forms of inconsistency can arise:
+* A zombie server must not serve read requests once replacement servers
+have taken over; otherwise it may return stale data that does not
+reflect writes accepted by the replacement servers.
+* The zombie server must not accept write requests once replacement
+servers have begun replaying its log during recovery; if it does,
+these writes may be lost (the new values may not be stored on the
+replacement servers and thus will not be returned by reads).
+RAMCloud uses two techniques to neutralize zombies. First,
+...
+```
+
+然后，在与这些问题相关的所有代码段中，都增加一个引用 designNotes 文件的简短注释。
+
+```auto
+// See "Zombies" in designNotes.
+```
+
+使用该方法，该文档只有一份副本，并且当开发人员需要它时，可以相对容易的找到它。可是，该方法也有一些缺点，文档并没有紧邻依赖它的代码片段，所以可能很难保证它与系统演进同步更新。
