@@ -1,6 +1,6 @@
 - [前言](zh-cn/Foreword.md)
 - [序言](zh-cn/Preface.md)
-- [第三章](zh-cn/Chapter-3_Working_Code_Is_not_Enough/Chapter-3_Working_Code_Is_not_Enough.md)
+- [第三章 能工作的代码还不够](zh-cn/Chapter-3_Working_Code_Is_not_Enough/Chapter-3_Working_Code_Is_not_Enough.md)
 - [第六章 信息隐藏与泄露](zh-cn/Chapter-5_Information_Hiding_and_Leakage/Chapter-5_Information_Hiding_and_Leakage.md)
 - [第六章 通用的类更深层](zh-cn/Chapter-6_General_Purpose_Modules_are_Deeper/Chapter-6_General_Purpose_Modules_are_Deeper.md)
 - [第八章 下沉复杂度](zh-cn/Chapter-8_Pull_Complexity_Downwards/Chapter-8_Pull_Complexity_Downwards.md)
